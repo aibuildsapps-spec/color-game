@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Color Match">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Fast-paced color matching game with difficulty levels and power-ups">
+  <title>Color Match - Game</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+    }
+
+    body.dark-mode {
+      background: #1a1a1a;
+      color: #ffffff;
+    }
+
+    .game-wrapper {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      max-width: 600px;
+      margin: 0 auto;
+      padding-top: max(1rem, env(safe-area-inset-top));
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+    }
+
+    .difficulty-info {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      background: #f5f5f5;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    body.dark-mode .difficulty-info {
+      background: #2a2a2a;
+      color: #999;
+    }
+
+    .difficulty-info-title {
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 0.25rem;
+    }
+
+    body.dark-mode .difficulty-info-title {
+      color: #ffffff;
+    }
+
+    .difficulty-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .diff-btn {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      background: #ffffff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      color: #1a1a1a;
+    }
+
+    body.dark-mode .diff-btn {
+      background: #2a2a2a;
+      border-color: #444;
+      color: #ffffff;
+    }
+
+    .diff-btn:active {
+      transform: scale(0.98);
+    }
+
+    .diff-btn.active {
+      background: #378add;
+      color: #ffffff;
+      border-color: #378add;
+    }
+
+    .game-container {
+      background: #f9f9f9;
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: none;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    body.dark-mode .game-container {
+      background: #2a2a2a;
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .game-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    body.dark-mode .game-title {
+      color: #ffffff;
+    }
+
+    .sound-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-display {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .score-card {
+      background: #ffffff;
+      padding: 0.75rem;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid #eee;
+    }
+
+    body.dark-mode .score-card {
+      background: #1a1a1a;
+      border-color: #444;
+    }
+
+    .score-label {
+      font-size: 11px;
+      color: #999;
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
+
+    .score-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    body.dark-mode .score-value {
+      color: #ffffff;
+    }
+
+    .power-ups {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .power-up {
+      flex: 1;
+      padding: 0.75rem;
+      background: #ffffff;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #1a1a1a;
+    }
+
+    body.dark-mode .power-up {
+      background: #1a1a1a;
+      border-color: #444;
+      color: #ffffff;
+    }
+
+    .power-up:active:not(.disabled) {
+      transform: scale(0.95);
+    }
+
+    .power-up.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .power-up-icon {
+      font-size: 16px;
+      margin-bottom: 0.25rem;
+    }
+
+    .power-up-label {
+      font-size: 10px;
+      color: #999;
+      font-weight: 500;
+    }
+
+    body.dark-mode .power-up-label {
+      color: #666;
+    }
+
+    .game-info {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .target-text {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 0.5rem;
+    }
+
+    body.dark-mode .target-text {
+      color: #666;
+    }
+
+    .target-color {
+      font-size: 22px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    body.dark-mode .target-color {
+      color: #ffffff;
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 1.5rem;
+      flex: 1;
+    }
+
+    .color-tile {
+      width: 100%;
+      aspect-ratio: 1;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0;
+      transition: transform 0.1s, box-shadow 0.1s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body.dark-mode .color-tile {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .color-tile:active {
+      transform: scale(0.9);
+    }
+
+    .color-tile.correct {
+      animation: correctPulse 0.4s ease-out;
+    }
+
+    @keyframes correctPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    .game-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      flex: 1;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      background: #ffffff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #1a1a1a;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body.dark-mode button {
+      background: #2a2a2a;
+      border-color: #444;
+      color: #ffffff;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .setup-screen {
+      text-align: center;
+      padding: 2rem 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+    }
+
+    .setup-screen p {
+      color: #999;
+      margin-bottom: 1.5rem;
+      font-size: 14px;
+    }
+
+    body.dark-mode .setup-screen p {
+      color: #666;
+    }
+
+    .start-btn {
+      padding: 0.75rem 2rem;
+      font-size: 16px;
+      background: #378add;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .start-btn:active {
+      transform: scale(0.98);
+    }
+
+    .game-over {
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: 12px;
+      border: 1px solid #eee;
+      text-align: center;
+      margin-top: 1.5rem;
+      display: none;
+    }
+
+    body.dark-mode .game-over {
+      background: #2a2a2a;
+      border-color: #444;
+    }
+
+    .game-over h2 {
+      font-size: 24px;
+      margin: 0 0 0.5rem;
+      color: #1a1a1a;
+    }
+
+    body.dark-mode .game-over h2 {
+      color: #ffffff;
+    }
+
+    .game-over-subtitle {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 1rem;
+    }
+
+    body.dark-mode .game-over-subtitle {
+      color: #666;
+    }
+
+    .final-score {
+      font-size: 32px;
+      font-weight: 600;
+      color: #378add;
+      margin: 1rem 0;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 1rem 0;
+    }
+
+    .stat-item {
+      background: #f5f5f5;
+      padding: 0.75rem;
+      border-radius: 8px;
+    }
+
+    body.dark-mode .stat-item {
+      background: #1a1a1a;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+    }
+
+    body.dark-mode .stat-label {
+      color: #666;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-top: 0.25rem;
+    }
+
+    body.dark-mode .stat-value {
+      color: #ffffff;
+    }
+
+    .play-again-btn {
+      margin-top: 1rem;
+      padding: 0.75rem 2rem;
+      background: #378add;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      html, body {
+        background: #1a1a1a;
+        color: #ffffff;
+      }
+      
+      body {
+        --use-dark-mode: 1;
+      }
+    }
+
+    @supports (padding: max(0px)) {
+      body {
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="game-wrapper">
+  <div class="difficulty-info" id="diffInfo">
+    <div class="difficulty-info-title">Easy</div>
+    <div>30s timer, 6 colors, +10 pts per match</div>
+  </div>
+
+  <div class="difficulty-selector" id="diffSelector">
+    <button class="diff-btn active" onclick="setDifficulty('easy')">Easy</button>
+    <button class="diff-btn" onclick="setDifficulty('normal')">Normal</button>
+    <button class="diff-btn" onclick="setDifficulty('hard')">Hard</button>
+  </div>
+
+  <div class="game-container" id="gameContainer">
+    <div class="game-header">
+      <h2 class="game-title">Color Match</h2>
+      <button class="sound-toggle" id="soundBtn" onclick="toggleSound()" title="Toggle sound">🔊</button>
+    </div>
+
+    <div class="score-display">
+      <div class="score-card">
+        <div class="score-label">Score</div>
+        <div class="score-value" id="score">0</div>
+      </div>
+      <div class="score-card">
+        <div class="score-label">Time</div>
+        <div class="score-value" id="time">30</div>
+      </div>
+      <div class="score-card">
+        <div class="score-label">Combo</div>
+        <div class="score-value" id="combo">0</div>
+      </div>
+      <div class="score-card">
+        <div class="score-label">Matches</div>
+        <div class="score-value" id="matches">0</div>
+      </div>
+    </div>
+
+    <div class="power-ups">
+      <button class="power-up" id="freezeBtn" onclick="activatePowerUp('freeze')" title="Freeze timer for 5s">
+        <div class="power-up-icon">❄️</div>
+        <div class="power-up-label">Freeze</div>
+      </button>
+      <button class="power-up" id="doubleBtn" onclick="activatePowerUp('double')" title="2x points for 10s">
+        <div class="power-up-icon">×2</div>
+        <div class="power-up-label">Double</div>
+      </button>
+      <button class="power-up" id="revealBtn" onclick="activatePowerUp('reveal')" title="Highlight target color">
+        <div class="power-up-icon">👁️</div>
+        <div class="power-up-label">Reveal</div>
+      </button>
+      <button class="power-up" id="slowBtn" onclick="activatePowerUp('slow')" title="Slow down color changes">
+        <div class="power-up-icon">⏱️</div>
+        <div class="power-up-label">Slow</div>
+      </button>
+    </div>
+
+    <div class="game-info">
+      <div class="target-text">Find this color:</div>
+      <div class="target-color" id="targetName">Red</div>
+    </div>
+
+    <div class="game-grid" id="gameGrid"></div>
+
+    <div class="game-controls">
+      <button id="pauseBtn" onclick="pauseGame()">Pause</button>
+      <button id="quitBtn" onclick="quitGame()">Quit</button>
+    </div>
+  </div>
+
+  <div class="setup-screen" id="setupScreen">
+    <p>Select a difficulty and start playing!</p>
+    <button class="start-btn" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div class="game-over" id="gameOverScreen"></div>
+</div>
+
+<script>
+  const colors = {
+    easy: [
+      { name: 'Red', rgb: '#E24B4A' },
+      { name: 'Blue', rgb: '#378ADD' },
+      { name: 'Green', rgb: '#639922' },
+      { name: 'Purple', rgb: '#7F77DD' },
+      { name: 'Teal', rgb: '#1D9E75' },
+      { name: 'Amber', rgb: '#EF9F27' }
+    ],
+    normal: [
+      { name: 'Red', rgb: '#E24B4A' },
+      { name: 'Blue', rgb: '#378ADD' },
+      { name: 'Green', rgb: '#639922' },
+      { name: 'Purple', rgb: '#7F77DD' },
+      { name: 'Teal', rgb: '#1D9E75' },
+      { name: 'Amber', rgb: '#EF9F27' },
+      { name: 'Pink', rgb: '#D4537E' },
+      { name: 'Coral', rgb: '#D85A30' }
+    ],
+    hard: [
+      { name: 'Red', rgb: '#E24B4A' },
+      { name: 'Blue', rgb: '#378ADD' },
+      { name: 'Green', rgb: '#639922' },
+      { name: 'Purple', rgb: '#7F77DD' },
+      { name: 'Teal', rgb: '#1D9E75' },
+      { name: 'Amber', rgb: '#EF9F27' },
+      { name: 'Pink', rgb: '#D4537E' },
+      { name: 'Coral', rgb: '#D85A30' },
+      { name: 'Indigo', rgb: '#534AB7' },
+      { name: 'Lime', rgb: '#97C459' }
+    ]
+  };
+
+  const difficulties = {
+    easy: { time: 30, tiles: 6, points: 10, colorChangeDelay: 800 },
+    normal: { time: 45, tiles: 8, points: 15, colorChangeDelay: 600 },
+    hard: { time: 60, tiles: 10, points: 20, colorChangeDelay: 400 }
+  };
+
+  const diffInfo = {
+    easy: { title: 'Easy', desc: '30s timer, 6 colors, +10 pts per match' },
+    normal: { title: 'Normal', desc: '45s timer, 8 colors, +15 pts per match' },
+    hard: { title: 'Hard', desc: '60s timer, 10 colors, +20 pts per match' }
+  };
+
+  let difficulty = 'easy';
+  let score = 0;
+  let combo = 0;
+  let matches = 0;
+  let timeLeft = 30;
+  let gameActive = false;
+  let gamePaused = false;
+  let targetColor = null;
+  let gameTimer = null;
+  let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+  let timerFrozen = false;
+  let doublePoints = false;
+  let revealActive = false;
+  let slowMode = false;
+  let powerUpCooldowns = {};
+  let tiles = [];
+
+  function setDifficulty(level) {
+    difficulty = level;
+    document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    const info = diffInfo[level];
+    document.getElementById('diffInfo').innerHTML = `<div class="difficulty-info-title">${info.title}</div><div>${info.desc}</div>`;
+  }
+
+  function playSound(type) {
+    if (!soundEnabled) return;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+      
+      if (type === 'correct') {
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.setValueAtTime(1000, ctx.currentTime + 0.05);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.1);
+      } else if (type === 'wrong') {
+        osc.frequency.setValueAtTime(300, ctx.currentTime);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.1);
+      } else if (type === 'powerup') {
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.setValueAtTime(900, ctx.currentTime + 0.1);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.2);
+      }
+    } catch (e) {
+      // Audio context not available
+    }
+  }
+
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    localStorage.setItem('soundEnabled', soundEnabled);
+    document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
+  }
+
+  function createGrid() {
+    const grid = document.getElementById('gameGrid');
+    grid.innerHTML = '';
+    const activeColors = colors[difficulty];
+    const numTiles = difficulties[difficulty].tiles;
+    const shuffled = activeColors.sort(() => Math.random() - 0.5).slice(0, numTiles);
+    tiles = shuffled;
+    
+    shuffled.forEach((color) => {
+      const tile = document.createElement('button');
+      tile.className = 'color-tile';
+      tile.style.backgroundColor = color.rgb;
+      if (revealActive && color.name === targetColor.name) {
+        tile.style.boxShadow = '0 0 16px rgba(0, 0, 0, 0.3), inset 0 0 16px rgba(255, 255, 255, 0.5)';
+      }
+      tile.onclick = () => checkColor(color);
+      grid.appendChild(tile);
+    });
+  }
+
+  function setTargetColor() {
+    const activeColors = colors[difficulty];
+    targetColor = activeColors[Math.floor(Math.random() * activeColors.length)];
+    document.getElementById('targetName').textContent = targetColor.name;
+  }
+
+  function checkColor(color) {
+    if (!gameActive || gamePaused) return;
+    
+    if (color.name === targetColor.name) {
+      playSound('correct');
+      let points = difficulties[difficulty].points;
+      if (doublePoints) points *= 2;
+      score += points + (combo * 5);
+      combo++;
+      matches++;
+      document.getElementById('score').textContent = Math.round(score);
+      document.getElementById('combo').textContent = combo;
+      document.getElementById('matches').textContent = matches;
+      
+      const tile = event.target;
+      tile.classList.add('correct');
+      setTimeout(() => {
+        createGrid();
+        setTargetColor();
+        tile.classList.remove('correct');
+      }, difficulties[difficulty].colorChangeDelay);
+    } else {
+      playSound('wrong');
+      combo = 0;
+      document.getElementById('combo').textContent = '0';
+    }
+  }
+
+  function activatePowerUp(type) {
+    if (!gameActive || gamePaused) return;
+    if (powerUpCooldowns[type]) return;
+    playSound('powerup');
+    
+    powerUpCooldowns[type] = true;
+    const btn = document.getElementById(type + 'Btn');
+    btn.classList.add('disabled');
+    
+    if (type === 'freeze') {
+      timerFrozen = true;
+      setTimeout(() => { timerFrozen = false; }, 5000);
+    } else if (type === 'double') {
+      doublePoints = true;
+      setTimeout(() => { doublePoints = false; }, 10000);
+    } else if (type === 'reveal') {
+      revealActive = true;
+      createGrid();
+      setTimeout(() => { revealActive = false; createGrid(); }, 8000);
+    } else if (type === 'slow') {
+      slowMode = true;
+      setTimeout(() => { slowMode = false; }, 10000);
+    }
+    
+    setTimeout(() => {
+      powerUpCooldowns[type] = false;
+      btn.classList.remove('disabled');
+    }, 30000);
+  }
+
+  function startGame() {
+    score = 0;
+    combo = 0;
+    matches = 0;
+    timeLeft = difficulties[difficulty].time;
+    gameActive = true;
+    gamePaused = false;
+    timerFrozen = false;
+    doublePoints = false;
+    revealActive = false;
+    slowMode = false;
+    powerUpCooldowns = {};
+    
+    document.getElementById('setupScreen').style.display = 'none';
+    document.getElementById('gameOverScreen').style.display = 'none';
+    document.getElementById('gameContainer').style.display = 'flex';
+    
+    document.getElementById('score').textContent = '0';
+    document.getElementById('combo').textContent = '0';
+    document.getElementById('matches').textContent = '0';
+    document.getElementById('time').textContent = timeLeft;
+    document.getElementById('pauseBtn').textContent = 'Pause';
+    
+    document.querySelectorAll('.power-up').forEach(btn => btn.classList.remove('disabled'));
+    
+    createGrid();
+    setTargetColor();
+    
+    gameTimer = setInterval(() => {
+      if (!timerFrozen && !gamePaused) {
+        timeLeft--;
+      }
+      document.getElementById('time').textContent = Math.max(0, timeLeft);
+      
+      if (timeLeft <= 0) {
+        endGame();
+      }
+    }, 1000);
+  }
+
+  function pauseGame() {
+    gamePaused = !gamePaused;
+    document.getElementById('pauseBtn').textContent = gamePaused ? 'Resume' : 'Pause';
+  }
+
+  function quitGame() {
+    gameActive = false;
+    clearInterval(gameTimer);
+    document.getElementById('gameContainer').style.display = 'none';
+    document.getElementById('setupScreen').style.display = 'flex';
+  }
+
+  function endGame() {
+    gameActive = false;
+    clearInterval(gameTimer);
+    
+    const finalScore = Math.round(score);
+    
+    document.getElementById('gameContainer').style.display = 'none';
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    gameOverScreen.style.display = 'block';
+    gameOverScreen.innerHTML = `
+      <div class="game-over" style="display: block;">
+        <h2>Game Over!</h2>
+        <div class="game-over-subtitle">Difficulty: ${diffInfo[difficulty].title}</div>
+        <div class="final-score">${finalScore}</div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-label">Matches</div>
+            <div class="stat-value">${matches}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Max Combo</div>
+            <div class="stat-value">${combo}</div>
+          </div>
+        </div>
+        <button class="play-again-btn" onclick="location.reload()">Play Again</button>
+      </div>
+    `;
+  }
+
+  // Initialize sound button
+  document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
+
+  // Detect dark mode preference
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.body.classList.add('dark-mode');
+  }
+
+  // Listen for dark mode changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (e.matches) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  });
+
+  // Prevent zoom on double tap
+  document.addEventListener('touchend', function(event) {
+    if (event.touches.length === 0) {
+      event.preventDefault();
+    }
+  }, false);
+</script>
+
+</body>
+</html>
